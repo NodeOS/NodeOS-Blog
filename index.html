@@ -1,171 +1,138 @@
 <!doctype html>
 <html>
-<head>
-  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
-  <link rel="stylesheet" href="http://node-os.com/css/default.css" />
-  <!-- START: ANGULAR DEPENDENCY -->
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.13/angular.min.js"></script>
-  <style>
-    #articles img{max-width:100%}
-  </style>
-  <!-- END: ANGULAR DEPENDENCY -->
-</head>
-<body>
-  <header class="navbar navbar-default navbar-fixed-top" role="navigation">
-    <!-- Brand and toggle get grouped for better mobile display -->
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a class="navbar-brand" href="http://node-os.com">node-os</a>
-    </div>
+  <head>
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="http://node-os.com/css/default.css" />
 
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse navbar-ex1-collapse">
-      <ul class="nav navbar-nav">
-        <li><a href="http://node-os.com/blog">Blog</a></li>
-        <li><a href="http://npkg.org">npkg.org</a></li>
-      </ul>
-    </div><!-- /.navbar-collapse -->
-  </header>
-<!-- START: ISSUES ITEM TEMPLATE -->
-<section ng-app="NodeOsBlog"  id="articles" class="section">
-  <div class="container" ng-controller="ErrorListCtrl" >
-    <article ng-repeat="error in errors" class="row">
-      <div class="col-sm-8 col-sm-offset-2">
-        <header class="alert alert-danger" role="alert">
-          <h3 class="title">{{error.name}}</h3>
-        </header>
-        <div class="content">{{error.message}}</div>
-        <footer>
-          Don't worry, it probably was not your fault... probably....
-          <br/><br/>
-          Even if it was,
-          <a target="_blank" href="https://github.com/formula1/NodeOS-Blog/issues" >just submit an issue :)</a>
-        </footer>
-      </div>
-    </article>
-  </div>
-  <div class="container" ng-controller="BlogListCtrl" >
-    <article ng-repeat="item in blog" class="row">
-      <div class="col-sm-8 col-sm-offset-2">
-        <header class="{{item.state}}">
-          <h3 class="title">{{item.title}}</h3>
-          <a href="https://github.com/{{uriPath}}/{{item.number}}">View on Github</a>
-        </header>
-        <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
-        <footer>
-          <a href="https://github.com/{{uriPath}}/{{item.number}}" class="comments">
-            There are {{item.comments}} comments.
-          </a>
-        </footer>
-      </div>
-    </article>
-  </div>
-</section>
-<!-- END: ISSUES ITEM TEMPLATE -->
-
-<div class="section inverse trampstamp">
-  <div class="row">
-    <div class="col-xs-12"><img src="http://node-os.com/images/nodeos-update.png"></div>
-  </div>
-</div>
-
-<footer>
-  <div class="container" id="footer">
-    <div class="row">
-      <div class="col-sm-7">
-        <h3 class="footer-title">Share</h3>
-        <p>node-os is a work in progress.</p>
-        <p>If you would like to support us, please share node-os via Twitter</p>
-        <p class="pvl">
-          <a href="https://twitter.com/TheNodeOS" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @TheNodeOS</a>
-          <script type="text/javascript">
-            (function(d,s,id){
-              var js;
-              fjs=d.getElementsByTagName(s)[0];
-              p= /^http\:/.test(d.location)?'http':'https';
-              if(!d.getElementById(id)){
-                js=d.createElement(s);
-                js.id=id;
-                js.src=p+'://platform.twitter.com/widgets.js';
-                fjs.parentNode.insertBefore(js,fjs);
-              }
-            })(document, 'script', 'twitter-wjs');
-          </script>
-          <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://node-os.com/blog/OS-flavors" data-text="NodeOS - The NodeJS Powered Operating System" data-via="TheNodeOS" data-size="large">Tweet</a>
-        </p>
-
-      </div>
-
-    </div>
-  </div>
-</footer>
-
-<!-- START: BIND DATA TO VIEW -->
-<script type="text/javascript">
-
-  var NodeOsBlog = angular.module('NodeOsBlog', []);
-  var errors = [];
-  NodeOsBlog.filter('to_trusted', ['$sce', function($sce){
-        return function(text) {
-            return $sce.trustAsHtml(text);
-        };
-    }]);
-  NodeOsBlog.controller('ErrorListCtrl', function($scope){
-    $scope.errors = errors;
-    var oldwinerr = window.onerror;
-    window.onerror = function ( message, filename, lineno, colno, error ){
-      if ( error !== undefined && error.hasOwnProperty( "name" ) && error.name == "Magic"){
-        errors.push({name:"Uncaught Error: "+error.name, message: message+"<pre>"+error.stack+"</pre>"});
+    <!-- START: ANGULAR DEPENDENCY -->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.13/angular.min.js"></script>
+    <style>
+      #articles img{max-width:100%}
+      .section
+      {
+        padding-top: 0px
       }
-    };
-  });
-  NodeOsBlog.controller('BlogListCtrl', function ($scope, $http) {
-    $scope.uriPath = "/NodeOS/NodeOS/issues";
-    $scope.blog = [];
-    $scope.parseMarkdown = function(item,next){
-      $http.post("https://api.github.com/markdown",{text:item.body})
-      .success(function(data){
-        item.bodyHTML = data;
-        next(item);
-      }).error(function(data, status, headers, config) {
-        errors.push({name:"Bad markdown call: "+status, message: data.message});
-        item.bodyHTML = "<pre>"+item.body+"</pre>";
-        next(item);
-      });
-    };
-    $scope.last = void(0);
-    $scope.loadMore = function(page){
-      if($scope.last && $scope.last < page) return;
-      var i=0;
-      var l=-1;
-      $http.get('https://api.github.com/repos'+$scope.uriPath+'?labels=blog&sort=created&page='+page)
-      .success(function(data,status,headers) {
-        console.log(headers);
-        console.log(headers.link);
-        if(!$scope.last) $scope.last =  headers.link?headers.link:1;
-        l = data.length;
-        if(i === l) return; //No more
-        var iterator = function(item){
-          $scope.blog.push(item);
-          i++;
-          if(i === l) return;
-          $scope.parseMarkdown(data[i],iterator);
-        };
-        $scope.parseMarkdown(data[0],iterator);
-      }).error(function(data, status, headers, config) {
-        errors.push({name:"Bad issues list request: "+status, message: data.message});
-      });
-    };
-    $scope.loadMore(1);
-  });
-</script>
-<!-- END: BIND DATA TO VIEW -->
-<script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js" ></script>
-</body>
+      footer
+      {
+        padding-top: 0px;
+        padding-bottom: 0px
+      }
+    </style>
+    <!-- END: ANGULAR DEPENDENCY -->
+
+  </head>
+  <body>
+    <header class="navbar navbar-default navbar-fixed-top" role="navigation">
+
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="http://node-os.com">node-os</a>
+      </div>
+
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="http://node-os.com/blog">Blog</a></li>
+          <li><a href="http://pipes.yahoo.com/pipes/pipe.run?_id=d98a965ba7d3f6555b939d707b18dc39&_render=rss&label=blog&owner=NodeOS&repo=NodeOS">RSS</a></li>
+        </ul>
+      </div>
+      <!-- /.navbar-collapse -->
+
+    </header>
+
+    <!-- START: ISSUES ITEM TEMPLATE -->
+    <section ng-app="NodeOsBlog"  id="articles" class="section">
+
+      <div class="container" ng-controller="ErrorListCtrl" >
+        <article ng-repeat="error in errors" class="row">
+          <div class="col-sm-8 col-sm-offset-2">
+            <header class="alert alert-danger" role="alert">
+              <h3 class="title">{{error.name}}</h3>
+            </header>
+            <div class="content">{{error.message}}</div>
+            <footer>
+              Don't worry, it probably was not your fault... probably...
+              <br/><br/>
+              Even if it was,
+              <a target="_blank" href="https://github.com/NodeOS/GitBlog/issues" >just submit an issue :)</a>
+            </footer>
+          </div>
+        </article>
+      </div>
+
+      <div class="container" ng-controller="BlogListCtrl" >
+        <article ng-repeat="item in blog" class="row">
+          <div class="col-sm-8 col-sm-offset-2">
+            <header class="{{item.state}}">
+              <a href="https://github.com/{{uriPath}}/{{item.number}}">
+                <h2 class="title">{{item.title}}</h2>
+              </a>
+              <span>by <a href="{{item.user.html_url}}">{{item.user.login}}</a></span>
+              <p class="blog-date">{{item.created_at | date}}
+                <span ng-if="item.created_at < item.updated_at">, updated {{item.updated_at | date}}</span>
+              </p>
+            </header>
+            <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
+            <footer>
+              <a href="https://github.com/{{uriPath}}/{{item.number}}" class="comments">
+                There are {{item.comments}} comments.
+              </a>
+            </footer>
+          </div>
+        </article>
+      </div>
+
+    </section>
+    <!-- END: ISSUES ITEM TEMPLATE -->
+
+    <div class="section inverse trampstamp">
+      <div class="row">
+        <div class="col-xs-12">
+          <img src="http://node-os.com/images/nodeos-update.png">
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="container" id="footer">
+        <div class="row">
+          <div class="col-sm-7">
+            <h3 class="footer-title">Share</h3>
+            <p>NodeOS is a work in progress.</p>
+            <p>If you would like to support us, please share node-os via Twitter</p>
+            <p class="pvl">
+              <a href="https://twitter.com/TheNodeOS" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @TheNodeOS</a>
+              <script type="text/javascript">
+                (function(d,s,id){
+                  var js;
+                  fjs=d.getElementsByTagName(s)[0];
+                  p= /^http\:/.test(d.location)?'http':'https';
+                  if(!d.getElementById(id)){
+                    js=d.createElement(s);
+                    js.id=id;
+                    js.src=p+'://platform.twitter.com/widgets.js';
+                    fjs.parentNode.insertBefore(js,fjs);
+                  }
+                })(document, 'script', 'twitter-wjs');
+              </script>
+              <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://node-os.com/blog/OS-flavors" data-text="NodeOS - The NodeJS Powered Operating System" data-via="TheNodeOS" data-size="large">Tweet</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- START: BIND DATA TO VIEW -->
+    <script type="text/javascript" src="js/index.js"></script>
+    <!-- END: BIND DATA TO VIEW -->
+
+    <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js" ></script>
+  </body>
 </html>
