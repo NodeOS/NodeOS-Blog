@@ -4,6 +4,7 @@
   cur_page["body"] += "\n"+include("parts/blogsingle.html");
   cur_page["body"] += "\n"+include("parts/commentlist.html");
   cur_page["foot"] = include("footerjs/error.js");
+  cur_page["foot"] += "\n"+include("footerjs/user.js");
   cur_page["foot"] += "\n"+include("footerjs/blogsingle.js");
   cur_page["foot"] += "\n"+include("footerjs/commentlist.js");
 %><%-include("template")%>

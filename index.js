@@ -5,7 +5,8 @@ var fs = require("fs");
 var b = browserify();
 b.require("markdown");
 b.require(__dirname+"/node_modules/highlight.js/lib/index.js", {expose:"highlight"});
-b.require(__dirname+"/node_modules/hellojs", {expose:"hello"});
+b.require("querystring");
+b.require("url");
 b.bundle(function(e,buff){
   if(e) throw e;
   var min = UglifyJS.parse(buff.toString("utf-8"));
@@ -33,11 +34,11 @@ ejs.renderFile(
   function(e,file){
     if(e) throw e;
     fs.writeFile(
-      __dirname+"/dist/blog.html",
+      __dirname+"/dist/index.html",
       file,
       function(e){
         if(e) throw e;
-        console.log("wrote blog.html");
+        console.log("wrote index.html");
       }
     );
   }

@@ -1,7 +1,8 @@
 <%
-  cur_page["head"] = include(htmlpath+"/parts/head.html");
-  cur_page["body"] = include(htmlpath+"/parts/error.html");
-  cur_page["body"] += "\n"+include(htmlpath+"/parts/bloglist.html");
-  cur_page["foot"] = include(htmlpath+"/footerjs/error.js");
-  cur_page["foot"] += "\n"+include(htmlpath+"/footerjs/bloglist.js");
+  cur_page["head"] = include("parts/head.html");
+  cur_page["body"] = include("parts/error.html");
+  cur_page["body"] += "\n"+include("parts/bloglist.html");
+  cur_page["foot"] = include("footerjs/error.js");
+  cur_page["foot"] += "\n"+include("footerjs/user.js");
+  cur_page["foot"] += "\n"+include("footerjs/bloglist.js");
 %><%-include(htmlpath+"/template")%>

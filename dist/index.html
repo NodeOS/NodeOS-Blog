@@ -51,7 +51,7 @@
     </div>
   </article>
 </div>
-<div class="container" ng-controller="BlogSingleCtrl" >
+<div class="container" ng-controller="BlogListCtrl" >
   <article ng-repeat="item in blog" class="row">
     <div class="col-sm-8 col-sm-offset-2">
       <header class="{{item.state}}">
@@ -63,22 +63,11 @@
         <a href="{{item.html_url}}">View on Github</a>
       </header>
       <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
-    </div>
-  </article>
-</div>
-<div class="container" ng-controller="CommentListCtrl" >
-  <article ng-repeat="item in blog" class="row">
-    <div class="col-sm-8 col-sm-offset-2">
-      <header class="{{item.state}}">
-        <h3 class="title">
-          <a href="{{item.user.html_url}}">
-            <img src="{{item.user.avatar_url}}" />
-            <span>{{item.user.login}}</span>
-          </a>
-        </h3>
-        <a href="{{item.html_url}}">View on Github</a>
-      </header>
-      <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
+      <footer>
+        <a href="http://node-os.com/blog/{{item.number}}" class="comments">
+          There are {{item.comments}} comments.
+        </a>
+      </footer>
     </div>
   </article>
 </div>
@@ -330,44 +319,8 @@ function logout(){
   auth.delete("access_token");
   is_authed = -1;
 }
-var hash = document.location.toString().split("#")[1];
-NodeOsBlog.controller('BlogSingleCtrl', function ($scope, $http) {
-  $scope.uriPath = "/NodeOS/NodeOS/issues/"+hash;
-  $scope.blog = [];
-  $scope.uriAsAuthority = uriAsAuthority;
-  $scope.parseMarkdown = parseMarkdown;
-
-  var markdown = require("markdown").markdown;
-  $scope.uriAsAuthority('https://api.github.com/repos'+$scope.uriPath,function(uri){
-    $http.get(uri).success(function(data,status,headers) {
-      var l = data.labels.length;
-      while(l--){
-        if(data.labels[l].name === "blog"){
-          break;
-        }
-      }
-      if(l < 0){
-        return errors.push({
-          name:"Trying to load a non-blog?",
-          message: "I technically can't stop you since this is clientside."+
-            " Hopefully my code feels clean enough to hack"
-        });
-      }
-      $scope.parseMarkdown(data,function(item){
-        $scope.blog.push(item);
-        $scope.$apply();
-      });
-    }).error(function(data, status, headers, config) {
-      if(status === 403){
-        add403();
-      }else{
-        errors.push({name:"Bad issues list request: "+status, message: data.message});
-      }
-    });
-  });
-});
-NodeOsBlog.controller('CommentListCtrl', function ($scope, $http) {
-  $scope.uriPath = "/NodeOS/NodeOS/issues/"+hash+"/comments";
+NodeOsBlog.controller('BlogListCtrl', function ($scope, $http) {
+  $scope.uriPath = "/NodeOS/NodeOS/issues";
   $scope.blog = [];
   $scope.last = void(0);
   $scope.uriAsAuthority = uriAsAuthority;
@@ -377,9 +330,12 @@ NodeOsBlog.controller('CommentListCtrl', function ($scope, $http) {
     var i=0;
     var l=-1;
     $scope.uriAsAuthority(
-      'https://api.github.com/repos'+$scope.uriPath+'?labels=blog&sort=created&page='+page,
+      'https://api.github.com/repos'+$scope.uriPath+'?labels=blog&sort=updated&page='+page,
       function(uri){
+console.log("uri");
       $http.get(uri).success(function(data,status,headers) {
+        console.log(headers);
+        console.log(headers.link);
         if(!$scope.last) $scope.last =  headers.link?headers.link.split("=").pop():1;
         l = data.length;
         if(i === l) return; //No more

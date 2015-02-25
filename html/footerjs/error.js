@@ -1,18 +1,20 @@
 var errors = [];
-var is_authed = false;
+
 function add403(){
   var topush = {
     class:"four-zero-three",
     name:"You've hit max data"
   };
-  if(is_authed){
-    topush.message = "Apparently, people have been using our app too much...";
+  if(is_authed === 1){
+    topush.message = "Apparently, people have been using our app too much..."+
+    "<button onclick='login()'>Log in</button>";
   }else{
     topush.message = "If you'd like to continue, please "+
-    "<button onclick='hello(\"github\").login()'>Log in</button>";
+    "<button onclick='login()'>Log in</button>";
   }
   errors.push(topush);
 }
+
 NodeOsBlog.controller('ErrorListCtrl', function($scope){
   $scope.removeError = function(error){
     var l = errors.length;
@@ -28,9 +30,46 @@ NodeOsBlog.controller('ErrorListCtrl', function($scope){
     }
   };
 });
-var hello = require("hello");
-hello.on("auth.login", function(auth){
-  hello(auth.network).api("/me").then(function(r){
-    document.querySelector(".four-zero-three .content").innerHTML("You've authenticated!");
+/* */
+function parseMarkdown(item,next){
+  uriAsAuthority("https://api.github.com/markdown/raw",function(uri){
+    jQuery.ajax({
+      url:uri,
+      type:'POST',
+      headers: {
+          'Content-Type': 'text/plain'
+      },
+      data:item.body
+    }).done(function(data){
+      item.bodyHTML = data;
+    }).fail(function(response, type, title, config) {
+      if(response.status === 403){
+        add403();
+      }else{
+        errors.push({name:"Bad markdown call: "+response.status, message: data.message});
+      }
+      item.bodyHTML = "<pre>"+item.body+"</pre>";
+    }).always(function(){
+      next(item);
+    });
   });
-});
+}
+
+/*
+var markdown = require("markdown").markdown;
+function parseMarkdown(item,next){
+  console.log("parsing");
+
+  try{
+    var t = jQuery("<div>"+markdown.toHTML(item.body)+"</div>");
+    t.find("code").wrap("<pre></pre>");
+
+    item.bodyHTML = t.html();
+    console.log(item.bodyHTML);
+  }catch(e){
+    console.log(e);
+    item.bodyHTML = "<pre>"+item.body+"</pre>";
+  }
+  setTimeout(next.bind(next,item),1);
+}
+/* */
