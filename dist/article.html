@@ -4,11 +4,12 @@
   <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
   <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
   <link rel="stylesheet" href="http://node-os.com/css/default.css" />
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.13/angular.min.js"></script>
+  <script type="application/javascript" src="http://cloud.github.com/downloads/wycats/handlebars.js/handlebars-1.0.0.beta.6.js"></script>
 <script type="text/javascript" src="/api.min.js" ></script>
 <style>
+  .more {display:none}
   #articles img{max-width:100%}
-  #articles article .title img{width:100px}
+  #articles article .title img{height:50px}
 </style>
 </head>
 <body>
@@ -34,54 +35,87 @@
   </header>
 <!-- START: ISSUES ITEM TEMPLATE -->
 <section ng-app="NodeOsBlog"  id="articles" class="section">
-  <div class="container" ng-controller="ErrorListCtrl" >
-  <article ng-repeat="(index, error) in errors" class="row">
-    <div class="col-sm-8 col-sm-offset-2 {{error.class}}" >
+  <div class="container error">
+</div>
+<script  type="text/html" class="template error">
+  <article class="row" data-unique="{{unique}}">
+    <div class="col-sm-8 col-sm-offset-2 {{class}}" >
       <header class="alert alert-danger" role="alert">
-        <h3 class="title">{{error.name}}</h3>
-        <p ng-mousedown="removeError(error)" > To remove this message, click here</p>
+        <h3 class="title">{{name}}</h3>
+        <a href="#" class="remove" > To remove this message, click here</a>
       </header>
-      <div class="content" ng-bind-html="error.message | to_trusted"></div>
+      <div class="content">{{{message}}}</div>
       <footer>
         Don't worry, it probably was not your fault... probably....
-        <br/><br/>
+        <br/>
         Even if it was,
         <a target="_blank" href="https://github.com/formula1/NodeOS-Blog/issues" >just submit an issue :)</a>
       </footer>
     </div>
   </article>
+</script>
+<div  id="westoredata" class="jumbotron">
+  <h1>We store data on your computer</h1>
+  <div>
+    <p>If you login: We store your access token we retrieve from github on your computer as a cookie.
+      <a href="https://github.com/formula1/AuthProvider/blob/master/index.js#L87">
+      See the Code
+      </a>
+    </p>
+    <p class="more" >
+      This is done so that we can access the github api in a verified manner.
+      <br/>This is purely optional and we never use your user information.
+      <br/>This is done to avoid server operations.
+    </p>
+    <p>By Using the Blog: We store data we get from github on your available local storage
+      <a href="https://github.com/formula1/NodeOS-Blog/blob/master/html/footerjs/cacheOrLoad.js#L38">
+        See the Code
+      </a>
+    </p>
+    <p class="more" >
+      This is done so that you may avoid as many calls to github as possible.
+      <br/>Without this, you would have to request github every time you wanted to
+      view a page.
+      <br/>This is not optional.
+    </p>
+  </div>
+  <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
 </div>
-<div class="container" ng-controller="BlogSingleCtrl" >
-  <article ng-repeat="item in blog" class="row">
+<div class="container blogsingle" >
+</div>
+<script type="text/html" class="template blogsingle" >
+  <article class="row">
     <div class="col-sm-8 col-sm-offset-2">
-      <header class="{{item.state}}">
+      <header class="{{state}}">
         <h3 class="title">
-          <a href="article.html#{{item.number}}">
-            {{item.title}}
+          <a href="article.html#!{{number}}">
+            {{title}}
           </a>
         </h3>
-        <a href="{{item.html_url}}">View on Github</a>
+        <a href="{{html_url}}">View on Github</a>
       </header>
-      <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
+      <div class="content" >{{{bodyHTML}}}</div>
     </div>
   </article>
+</script>
+<div class="container comments" >
 </div>
-<div class="container" ng-controller="CommentListCtrl" >
-  <article ng-repeat="item in blog" class="row">
+<script type="text/html" class="template comments">
+  <article class="row">
     <div class="col-sm-8 col-sm-offset-2">
-      <header class="{{item.state}}">
+      <header class="{{state}}">
         <h3 class="title">
-          <a href="{{item.user.html_url}}">
-            <img src="{{item.user.avatar_url}}" />
-            <span>{{item.user.login}}</span>
+          <a href="{{user.html_url}}">
+            <img src="{{user.avatar_url}}" />
+            <span>{{user.login}}</span>
           </a>
         </h3>
-        <a href="{{item.html_url}}">View on Github</a>
+        <a href="{{html_url}}">View on Github</a>
       </header>
-      <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
+      <div class="content">{{{bodyHTML}}}</div>
     </div>
   </article>
-</div>
+</script>
 </section>
 <!-- END: ISSUES ITEM TEMPLATE -->
 
@@ -126,183 +160,95 @@
 <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js" ></script>
 <!-- START: BIND DATA TO VIEW -->
 <script type="text/javascript">
+  var async = require("async");
 
-  var NodeOsBlog = angular.module('NodeOsBlog', []);
-  NodeOsBlog.filter('to_trusted', ['$sce', function($sce){
-        return function(text) {
-            return $sce.trustAsHtml(text);
-        };
-  }]);
-  var errors = [];
+var in_memory = {};
 
-function add403(){
-  var topush = {
-    class:"four-zero-three",
-    name:"You've hit max data"
-  };
-  if(is_authed === 1){
-    topush.message = "Apparently, people have been using our app too much..."+
-    "<button onclick='login()'>Log in</button>";
-  }else{
-    topush.message = "If you'd like to continue, please "+
-    "<button onclick='login()'>Log in</button>";
+function cacheOrUriIterator(cachename, itemCBs){
+  var cached = localStorage.getItem(cachename);
+  if(!cached || cached === "undefined" || cached === "[]" ){
+    in_memory[cachename] = [];
+    return UriIterator(cachename, void(0), itemCBs);
   }
-  errors.push(topush);
+  console.log("cached");
+  cached = JSON.parse(cached);
+  if(!Array.isArray(cached)){
+    cached = [cached];
+  }
+  async.eachSeries(cached,
+    itemCBs.ready,
+  function(e,results){
+    in_memory[cachename] = cached;
+    UriIterator(cachename, cached[cached.length - 1].timestamp, itemCBs);
+  });
 }
 
-NodeOsBlog.controller('ErrorListCtrl', function($scope){
-  $scope.removeError = function(error){
-    var l = errors.length;
+function UriIterator(cachename, timestamp, itemCBs){
+  itemCBs.timestamp2URI(timestamp,function(uri){
+    jQuery.get(uri).done(function(data){
+      if(!Array.isArray(data)){
+        data = [data];
+      }
+      async.eachSeries(data, function(item,next){
+        itemCBs.prep(item,function(item){
+          itemCBs.ready(item, next);
+        });
+      },function(err,results){
+        if(err) return itemCBs.error(err);
+        in_memory[cachename] = in_memory[cachename].concat(data);
+        try{
+          localStorage.setItem( cachename,JSON.stringify(in_memory[cachename]) );
+        }catch(e){
+          return itemCBs.error(e);
+        }
+        delete in_memory[cachename];
+        if(data.length === 0){
+          itemCBs.done(timestamp);
+        }else{
+          itemCBs.done(data[data.length -1].timestamp);
+        }
+      });
+    }).fail(itemCBs.error);
+  });
+}
+function Template(template,contain,unique){
+  this.template = Handlebars.compile(jQuery(template).html());
+  this.contain = jQuery(contain);
+  this.unique = {};
+  if(Array.isArray(unique)){
+    var l = unique.length;
     while(l--){
-      if(errors[l] == error) return errors.splice(l,1);
+      this.unique[unique[l]] = false;
     }
-  };
-  $scope.errors = errors;
-  var oldwinerr = window.onerror;
-  window.onerror = function ( message, filename, lineno, colno, error ){
-    if ( error !== undefined && error.hasOwnProperty( "name" ) && error.name == "Magic"){
-      errors.push({name:"Uncaught Error: "+error.name, message: message+"<pre>"+error.stack+"</pre>"});
-    }
-  };
+  }
+  this.contain.find(".remove").on("click",this.remove.bind(this));
+}
+
+Template.prototype.add = function(item){
+  if(item.class && typeof this.unique[item.class] != "undefined"){
+    if(this.unique[item.class]) return;
+    this.unique[item.class] = true;
+  }
+  console.log("appending");
+  this.contain.append(this.template(item));
+};
+
+Template.prototype.remove = function(e){
+  e.preventDefault();
+  var art = $(this).closest("article");
+  var u = art.attr("data-unique");
+  if(u){
+    this.unique[u] = false;
+  }
+  art.remove();
+};
+jQuery(function($){
+  $("#westoredata>p a").click(function(e){
+    e.preventDefault();
+    $("#westoredata>div .more").toggle();
+  });
 });
-/* */
-function parseMarkdown(item,next){
-  uriAsAuthority("https://api.github.com/markdown/raw",function(uri){
-    jQuery.ajax({
-      url:uri,
-      type:'POST',
-      headers: {
-          'Content-Type': 'text/plain'
-      },
-      data:item.body
-    }).done(function(data){
-      item.bodyHTML = data;
-    }).fail(function(response, type, title, config) {
-      if(response.status === 403){
-        add403();
-      }else{
-        errors.push({name:"Bad markdown call: "+response.status, message: data.message});
-      }
-      item.bodyHTML = "<pre>"+item.body+"</pre>";
-    }).always(function(){
-      next(item);
-    });
-  });
-}
 
-/*
-var markdown = require("markdown").markdown;
-function parseMarkdown(item,next){
-  console.log("parsing");
-
-  try{
-    var t = jQuery("<div>"+markdown.toHTML(item.body)+"</div>");
-    t.find("code").wrap("<pre></pre>");
-
-    item.bodyHTML = t.html();
-    console.log(item.bodyHTML);
-  }catch(e){
-    console.log(e);
-    item.bodyHTML = "<pre>"+item.body+"</pre>";
-  }
-  setTimeout(next.bind(next,item),1);
-}
-/* */
-function CookieStore(id){
-  this.id = id;
-  var cook = document.cookie.split(";");
-  var current;
-  var i;
-  for(i=0;i<cook.length;i++){
-    if(cook[i].indexOf("=") != -1){
-      current = cook[i].split("=");
-      if(current[0].replace(/s/, "") == id){
-        this.cookie = JSON.parse(decodeURIComponent(current[1]));
-        return;
-      }
-    }
-  }
-  this.cookie = {};
-  this.save();
-}
-
-CookieStore.prototype.get = function(key){
-  return this.cookie[key];
-};
-CookieStore.prototype.set = function(key, value){
-  this.cookie[key] = value;
-  this.save();
-  return this;
-};
-CookieStore.prototype.delete = function(key){
-  delete this.cookie[key];
-  this.save();
-  return this;
-};
-
-CookieStore.prototype.save = function(){
-  document.cookie = this.id+"="+encodeURIComponent(JSON.stringify(this.cookie))+";";
-};
-
-//==========Auth Start===================
-
-
-var auth = new CookieStore("auth");
-var is_authed = -1;
-var auth_queue = [];
-var url = require("url");
-var querystring = require("querystring");
-var docuri = url.parse(window.location.href);
-docuri.query = querystring.parse(docuri.query);
-var config = {
-  cid: "dafb27cb88db35267e75",
-  yqluri: "store://gdDAnJkTXAuVgzAQ8wboA2"
-};
-if(docuri.query && docuri.query.code){
-  if(docuri.query.state != auth.get("state")){
-    errors.push(new Error("Improper State"));
-  }else{
-    getAccess(docuri.query.code);
-  }
-}else if(auth.get("access_token")){
-  console.log(auth.get("access_token"));
-  is_authed = 1;
-}
-
-function login(){
-  var state = Date.now()+"_"+Math.random();
-  auth.set("state", state);
-  window.location.href = "https://github.com/login/oauth/authorize" +
-    "?client_id="+config.cid +
-    "&state="+state;
-}
-function getAccess(code){
-  is_authed = 0;
-  auth.delete("state");
-  jQuery.get(compileYQL([
-    "env \""+config.yqluri+"\"",
-    "select * from github where CODE=\""+code+"\""
-  ])).done(function(results){
-    console.log("auth success");
-    console.log(arguments);
-    auth.set("access_token",results.query.results.OAuth.access_token);
-    is_authed = 1;
-    jQuery(".four-zero-three .content").text("You've authenticated!");
-  }).fail(function(e){
-    console.error(arguments);
-    is_authed = -1;
-    errors.push({
-      class:"four-zero-three",
-      name:"You've failed authorization",
-      message: "You can always try again"
-    });
-  }).always(function(){
-    console.log("always");
-    while(auth_queue.length){
-      uriAsAuthority.apply(void(0),auth_queue.pop());
-    }
-  });
-}
 
 function compileYQL(query){
   if(Array.isArray(query)){
@@ -315,92 +261,228 @@ function compileYQL(query){
     encodeURIComponent(query) +
     "&diagnostics=true&format=json";
 }
+function yql_access(yql_uri){
+  return function(code,next){
+    var url;
+    try{
+      url = compileYQL([
+        "env \""+yql_uri+"\"",
+        "select * from github where CODE=\""+code+"\""
+      ]);
+    }catch(e){
+      return setTimeout(next.bind(next,e),1);
+    }
 
-function uriAsAuthority(uri,next){
-  if(is_authed === -1) return next(uri);
-  if(is_authed === 0) return auth_queue.push([uri,next]);
-  uri = url.parse(uri);
-  uri.query = querystring.parse(uri.query);
-  uri.query.access_token = auth.get("access_token");
-  uri.search = "?"+querystring.stringify(uri.query);
-  next(url.format(uri));
-}
-
-function logout(){
-  auth.delete("access_token");
-  is_authed = -1;
-}
-var hash = document.location.toString().split("#")[1];
-NodeOsBlog.controller('BlogSingleCtrl', function ($scope, $http) {
-  $scope.uriPath = "/NodeOS/NodeOS/issues/"+hash;
-  $scope.blog = [];
-  $scope.uriAsAuthority = uriAsAuthority;
-  $scope.parseMarkdown = parseMarkdown;
-
-  var markdown = require("markdown").markdown;
-  $scope.uriAsAuthority('https://api.github.com/repos'+$scope.uriPath,function(uri){
-    $http.get(uri).success(function(data,status,headers) {
-      var l = data.labels.length;
-      while(l--){
-        if(data.labels[l].name === "blog"){
-          break;
-        }
-      }
-      if(l < 0){
-        return errors.push({
-          name:"Trying to load a non-blog?",
-          message: "I technically can't stop you since this is clientside."+
-            " Hopefully my code feels clean enough to hack"
-        });
-      }
-      $scope.parseMarkdown(data,function(item){
-        $scope.blog.push(item);
-        $scope.$apply();
-      });
-    }).error(function(data, status, headers, config) {
-      if(status === 403){
-        add403();
-      }else{
-        errors.push({name:"Bad issues list request: "+status, message: data.message});
-      }
-    });
-  });
-});
-NodeOsBlog.controller('CommentListCtrl', function ($scope, $http) {
-  $scope.uriPath = "/NodeOS/NodeOS/issues/"+hash+"/comments";
-  $scope.blog = [];
-  $scope.last = void(0);
-  $scope.uriAsAuthority = uriAsAuthority;
-  $scope.parseMarkdown = parseMarkdown;
-  $scope.loadMore = function(page){
-    if($scope.last && $scope.last < page) return;
-    var i=0;
-    var l=-1;
-    $scope.uriAsAuthority(
-      'https://api.github.com/repos'+$scope.uriPath+'?labels=blog&sort=created&page='+page,
-      function(uri){
-      $http.get(uri).success(function(data,status,headers) {
-        if(!$scope.last) $scope.last =  headers.link?headers.link.split("=").pop():1;
-        l = data.length;
-        if(i === l) return; //No more
-        var iterator = function(item){
-          $scope.blog.push(item);
-          $scope.$apply();
-          i++;
-          if(i === l) return;
-          $scope.parseMarkdown(data[i],iterator);
-        };
-        $scope.parseMarkdown(data[0],iterator);
-      }).error(function(data, status, headers, config) {
-        if(status === 403){
-          add403();
-        }else{
-          errors.push({name:"Bad issues list request: "+status, message: data.message});
-        }
-      });
+    jQuery.ajax(url).done(function(results){
+      next(void(0),results.query.results.OAuth.access_token);
+    }).fail(function(x,status,e){
+      next(e);
     });
   };
-  $scope.loadMore(1);
+}
+
+
+/* */
+function parseMarkdown(item,next){
+  user.asAuthority("https://api.github.com/markdown/raw",function(uri){
+    jQuery.ajax({
+      url:uri,
+      type:'POST',
+      headers: {
+          'Content-Type': 'text/plain'
+      },
+      data:item.body
+    }).done(function(data){
+      item.bodyHTML = data;
+    }).fail(function(response, textStatus,data) {
+      if(response.status === 403){
+        add403();
+      }else{
+        addError({name:"Bad markdown call: "+response.status, message: data.message});
+      }
+      item.bodyHTML = "<pre>"+item.body+"</pre>";
+    }).always(function(){
+      next(item);
+    });
+  });
+}
+var errorHandler;
+jQuery(function($){
+  errorHandler = new Template(
+    "script.template.error",
+    "div.container.error",
+    ["four-zero-three"]
+  );
+  var oldwinerr = window.onerror;
+  window.onerror = function ( message, filename, lineno, colno, error ){
+    if ( error !== undefined && error.hasOwnProperty( "name" ) && error.name == "Magic"){
+      errorHandler.add({
+        name:"Uncaught Error: "+error.name,
+        message: message+"<pre>"+error.stack+"</pre>"
+      });
+    }
+    if(oldwinerr){
+      oldwinerr(message, filename, lineno, colno, error );
+    }
+  };
+});
+
+function addError(error){
+  if(error.status){
+    errorHandler.add({name:"Ajax: "+error.status, message:error.responseText});
+  }else{
+    errorHandler.add({name:error.name, message:error.stack});
+  }
+}
+
+function add403(){
+  var topush = {
+    class:"four-zero-three",
+    name:"You've hit max data"
+  };
+  if(user.isLoggedIn){
+    topush.message = "Apparently, people have been using our app too much..."+
+    "<button onclick='user.login()'>Log in</button>";
+  }else{
+    topush.message = "If you'd like to continue, please "+
+    "<button onclick='user.login()'>Log in</button>";
+  }
+  errorHandler.add(topush);
+}
+
+function add404(){
+  errorHandler.add({
+    name: "Your in the wrong place my friend.",
+    message: "<a href='/'>Heres a hand, we'll get you back on the right track</a>"
+  });
+}
+var config = {
+  cid: "dafb27cb88db35267e75",
+  yqluri: "store://gdDAnJkTXAuVgzAQ8wboA2"
+};
+
+var AuthProvider = require("auth-provider");
+
+window.user = new AuthProvider(
+  config.cid,
+  yql_access(config.yqluri)
+);
+user.on("error",function(e){
+  console.error(e);
+});
+user.on("login",function(token){
+  jQuery(".four-zero-three .content").text("You've authenticated!");
+});
+var num = (function(){
+  var temp = document.location.href.split("#!")[1];
+  console.log(temp);
+  if(/[0-9]+/.test(temp)) return temp;
+  temp = document.location.href.split("?");
+  if(temp.length == 1){
+    return add404();
+  }
+  temp = require("querystring").parse(temp[1]);
+  if(!temp._escaped_fragment_){
+    return add404();
+  }
+  return temp._escaped_fragment_;
+})();
+
+var singleHandler;
+
+jQuery(function($){
+  if(!num) return;
+  singleHandler = new Template(
+    "script.template.blogsingle",
+    "div.container.blogsingle"
+  );
+  singleHandler._x = {
+    uri: "https://api.github.com/repos/NodeOS/NodeOS/issues/"+num,
+    last: void(0)
+  };
+  cacheOrUriIterator(
+    "issue-"+num,
+    {
+      timestamp2URI: function(timestamp,next){
+        if(Date.now() - timestamp < 1000*60*60*24) return;
+        user.asAuthority(singleHandler._x.uri,next);
+      },
+      prep: function(item, next){
+        item.timestamp = Date.now();
+        var l = item.labels.length;
+        while(l--){
+          if(item.labels[l].name === "blog"){
+            break;
+          }
+        }
+        if(l < 0){
+          return addError({
+            name:"Trying to load a non-blog?",
+            message: "I technically can't stop you since this is clientside."+
+              " Hopefully my code feels clean enough to hack"
+          });
+        }
+        parseMarkdown(item,next);
+      },
+      ready: function(item,next){
+        singleHandler.add(item);
+        next();
+      },
+      done: function(date){
+        singleHandler._x.last = date;
+      },
+      error: function(error){
+        if(error.status && error.status === 403){
+          add403();
+        }else{
+          addError(error);
+        }
+      }
+    }
+  );
+});
+var commentHandler;
+
+jQuery(function($){
+  if(!num) return;
+  commentHandler = new Template(
+    "script.template.comments",
+    "div.container.comments"
+  );
+  commentHandler._x = {
+    uri: "https://api.github.com/repos/NodeOS/NodeOS/issues/"+num+"/comments",
+    last: void(0)
+  };
+  cacheOrUriIterator(
+    "issue-comments-"+num,
+    {
+      timestamp2URI: function(timestamp,next){
+        var uri = commentHandler._x.uri;
+        if(timestamp) {
+          uri += "?since="+(new Date(timestamp+1000)).toISOString();
+        }
+        user.asAuthority(uri,next);
+      },
+      prep: function(item, next){
+        item.timestamp = (new Date(item.created_at)).getTime();
+        parseMarkdown(item,next);
+      },
+      ready: function(item,next){
+        commentHandler.add(item);
+        setTimeout(next,1);
+      },
+      done: function(date){
+        commentHandler._x.last = date;
+      },
+      error: function(error){
+        if(error.status && error.status === 403){
+          add403();
+        }else{
+          addError(error);
+        }
+      }
+    }
+  );
 });
 </script>
 <!-- END: BIND DATA TO VIEW -->

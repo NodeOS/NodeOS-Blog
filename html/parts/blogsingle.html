@@ -1,15 +1,17 @@
-<div class="container" ng-controller="BlogSingleCtrl" >
-  <article ng-repeat="item in blog" class="row">
+<div class="container blogsingle" >
+</div>
+<script type="text/html" class="template blogsingle" >
+  <article class="row">
     <div class="col-sm-8 col-sm-offset-2">
-      <header class="{{item.state}}">
+      <header class="{{state}}">
         <h3 class="title">
-          <a href="article.html#{{item.number}}">
-            {{item.title}}
+          <a href="article.html#!{{number}}">
+            {{title}}
           </a>
         </h3>
-        <a href="{{item.html_url}}">View on Github</a>
+        <a href="{{html_url}}">View on Github</a>
       </header>
-      <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
+      <div class="content" >{{{bodyHTML}}}</div>
     </div>
   </article>
-</div>
+</script>

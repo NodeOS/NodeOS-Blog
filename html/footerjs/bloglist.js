@@ -1,39 +1,44 @@
-NodeOsBlog.controller('BlogListCtrl', function ($scope, $http) {
-  $scope.uriPath = "/NodeOS/NodeOS/issues";
-  $scope.blog = [];
-  $scope.last = void(0);
-  $scope.uriAsAuthority = uriAsAuthority;
-  $scope.parseMarkdown = parseMarkdown;
-  $scope.loadMore = function(page){
-    if($scope.last && $scope.last < page) return;
-    var i=0;
-    var l=-1;
-    $scope.uriAsAuthority(
-      'https://api.github.com/repos'+$scope.uriPath+'?labels=blog&sort=updated&page='+page,
-      function(uri){
-console.log("uri");
-      $http.get(uri).success(function(data,status,headers) {
-        console.log(headers);
-        console.log(headers.link);
-        if(!$scope.last) $scope.last =  headers.link?headers.link.split("=").pop():1;
-        l = data.length;
-        if(i === l) return; //No more
-        var iterator = function(item){
-          $scope.blog.push(item);
-          $scope.$apply();
-          i++;
-          if(i === l) return;
-          $scope.parseMarkdown(data[i],iterator);
-        };
-        $scope.parseMarkdown(data[0],iterator);
-      }).error(function(data, status, headers, config) {
-        if(status === 403){
+
+var listHandler;
+
+jQuery(function($){
+  listHandler = new Template(
+    "script.template.bloglist",
+    "div.container.bloglist"
+  );
+  listHandler._x = {
+    uri: "https://api.github.com/repos/NodeOS/NodeOS/issues?labels=blog&sort=updated",
+    last: void(0)
+  };
+  cacheOrUriIterator(
+    "issue-list",
+    {
+      timestamp2URI: function(timestamp,next){
+        var uri = listHandler._x.uri;
+        if(timestamp) {
+          var temp = new Date(timestamp+1000);
+          uri += "&since="+(new Date(timestamp+1000)).toISOString();
+        }
+        user.asAuthority(uri,next);
+      },
+      prep: function(item, next){
+        item.timestamp = (new Date(item.updated_at)).getTime();
+        parseMarkdown(item,next);
+      },
+      ready: function(item,next){
+        listHandler.add(item);
+        setTimeout(next,1);
+      },
+      done: function(date){
+        listHandler._x.last = date;
+      },
+      error: function(error){
+        if(error.status && error.status === 403){
           add403();
         }else{
-          errors.push({name:"Bad issues list request: "+status, message: data.message});
+          addError(error);
         }
-      });
-    });
-  };
-  $scope.loadMore(1);
+      }
+    }
+  );
 });

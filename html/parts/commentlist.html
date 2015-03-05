@@ -1,16 +1,18 @@
-<div class="container" ng-controller="CommentListCtrl" >
-  <article ng-repeat="item in blog" class="row">
+<div class="container comments" >
+</div>
+<script type="text/html" class="template comments">
+  <article class="row">
     <div class="col-sm-8 col-sm-offset-2">
-      <header class="{{item.state}}">
+      <header class="{{state}}">
         <h3 class="title">
-          <a href="{{item.user.html_url}}">
-            <img src="{{item.user.avatar_url}}" />
-            <span>{{item.user.login}}</span>
+          <a href="{{user.html_url}}">
+            <img src="{{user.avatar_url}}" />
+            <span>{{user.login}}</span>
           </a>
         </h3>
-        <a href="{{item.html_url}}">View on Github</a>
+        <a href="{{html_url}}">View on Github</a>
       </header>
-      <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
+      <div class="content">{{{bodyHTML}}}</div>
     </div>
   </article>
-</div>
+</script>

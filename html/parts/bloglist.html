@@ -1,20 +1,22 @@
-<div class="container" ng-controller="BlogListCtrl" >
-  <article ng-repeat="item in blog" class="row">
-    <div class="col-sm-8 col-sm-offset-2">
-      <header class="{{item.state}}">
-        <h3 class="title">
-          <a href="article.html#{{item.number}}">
-            {{item.title}}
-          </a>
-        </h3>
-        <a href="{{item.html_url}}">View on Github</a>
-      </header>
-      <div class="content" ng-bind-html="item.bodyHTML | to_trusted"></div>
-      <footer>
-        <a href="http://node-os.com/blog/{{item.number}}" class="comments">
-          There are {{item.comments}} comments.
-        </a>
-      </footer>
-    </div>
-  </article>
+<div class="container bloglist">
 </div>
+<script type="text/html" class="template bloglist">
+    <article class="row">
+      <div class="col-sm-8 col-sm-offset-2">
+        <header class="{{state}}">
+          <h3 class="title">
+            <a href="article.html#!{{number}}">
+              {{title}}
+            </a>
+          </h3>
+          <a href="{{html_url}}">View on Github</a>
+        </header>
+        <div class="content">{{{bodyHTML}}}</div>
+        <footer>
+          <a href="article.html#!{{number}}" class="comments">
+            There are {{comments}} comments.
+          </a>
+        </footer>
+      </div>
+    </article>
+</script>
