@@ -4,7 +4,7 @@
   "description": "Simple blog for node OS based on github issues",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node build.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

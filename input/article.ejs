@@ -1,0 +1,8 @@
+<%
+  cur_page["body"] = include(htmlpath+"/parts/blogsingle.html")
+              + "\n"+include(htmlpath+"/parts/commentlist.html");
+
+  cur_page["foot"] = include(htmlpath+"/js/blogsingle.js")
+              + "\n"+include(htmlpath+"/js/commentlist.js");
+%>
+<%-include(htmlpath+"/template")%>
