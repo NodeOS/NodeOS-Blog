@@ -1,27 +1,67 @@
 var async = require("async");
+var version = 1;
+var userversion = localStorage.getItem("cacheorUri-version");
+if(!userversion || userversion === "undefined" || userversion < version){
+  localStorage.clear();
+}
+localStorage.setItem("cacheorUri-version",version);
 
-var in_memory = {};
+var checkArrayOrder, reOrderAndConsolidate;
 
-function cacheOrUriIterator(cachename, itemCBs){
-  var cached = localStorage.getItem(cachename);
-  if(!cached || cached === "undefined" || cached === "[]" ){
-    in_memory[cachename] = [];
-    return UriIterator(cachename, void(0), itemCBs);
+
+module.exports = function(cachename, itemCBs){
+  getCacheData(cachename,function(e,cacheData){
+    var timestamp;
+    if(e) cacheData = [];
+    else if(checkArrayOrder(cacheData)=="desc"){
+      timestamp = cacheData[0].timestamp
+    }else{
+      timestamp = cacheData[cacheData.length-1].timestamp;
+    }
+    UriIterator(timestamp, itemCBs,function(e,uriData){
+      if(e) return itemCBs.error(e);
+      var consolidated = reOrderAndConsolidate(cacheData,uriData);
+      finalize(
+        cachename,
+        consolidated,
+        itemCBs,
+        function(err){
+          if(err) return itemCBs.error(e);
+          if(consolidated.length === 0){
+            return itemCBs.done(timestamp);
+          }
+          if(checkArrayOrder(consolidated)=="desc"){
+            return itemCBs.done(consolidated.shift().timestamp);
+          }
+          itemCBs.done(consolidated.pop().timestamp);
+        }
+      );
+    });
+  })
+}
+
+function getCacheData(cachename,next){
+  try{
+    var cached = localStorage.getItem(cachename);
+  }catch(e){
+    return setTimeout(next.bind(next,e),1);
   }
-  console.log("cached");
-  cached = JSON.parse(cached);
+  if(!cached || /^\[?undefined(?:\]?)$|\[\]|\[?null(?:\]?)$/.test(cached)){
+    return setTimeout(next.bind(next,"empty"),1);
+  }
+  try{
+    cached = JSON.parse(cached);
+  }catch(e){
+    return setTimeout(next.bind(next,e),1);
+  }
   if(!Array.isArray(cached)){
     cached = [cached];
   }
-  async.eachSeries(cached,
-    itemCBs.ready,
-  function(e,results){
-    in_memory[cachename] = cached;
-    UriIterator(cachename, cached[cached.length - 1].timestamp, itemCBs);
-  });
+  setTimeout(next.bind(next,void(0),cached),1);
 }
 
-function UriIterator(cachename, timestamp, itemCBs){
+
+function UriIterator(timestamp, itemCBs, next){
   itemCBs.timestamp2URI(timestamp,function(uri){
     jQuery.get(uri).done(function(data){
       if(!Array.isArray(data)){
@@ -29,23 +69,49 @@ function UriIterator(cachename, timestamp, itemCBs){
       }
       async.eachSeries(data, function(item,next){
         itemCBs.prep(item,function(item){
-          itemCBs.ready(item, next);
+          next();
         });
-      },function(err,results){
-        if(err) return itemCBs.error(err);
-        in_memory[cachename] = in_memory[cachename].concat(data);
-        try{
-          localStorage.setItem( cachename,JSON.stringify(in_memory[cachename]) );
-        }catch(e){
-          return itemCBs.error(e);
-        }
-        delete in_memory[cachename];
-        if(data.length === 0){
-          itemCBs.done(timestamp);
-        }else{
-          itemCBs.done(data[data.length -1].timestamp);
-        }
+      },function(err){
+        next(err,data);
       });
-    }).fail(itemCBs.error);
+    }).fail(itemCBs.error.bind(itemCBs.error));
   });
+}
+
+checkArrayOrder = module.exports.checkArrayOrder = function(ari){
+  return !ari || ari.length < 2?
+    "unk":
+    ari[0].timestamp < ari[1].timestamp?
+      "asc":"desc";
+}
+reOrderAndConsolidate = module.exports.reOrderAndConsolidate = function(cacheData,uriData){
+  var cacheOrder = checkArrayOrder(cacheData)
+  var uriOrder = checkArrayOrder(uriData)
+  var order;
+  if(cacheOrder == "unk" && uriOrder == "unk"){
+    order = "asc";
+  }else if(cacheOrder == uriOrder){
+    order = uriOrder;
+  }if(cacheOrder == "unk" || uriOrder == "unk"){
+    order = cacheOrder == "unk"?uriOrder:cacheOrder;
+  }else if(cacheOrder != uriOrder){
+    cacheData.sort(function(a,b){
+      return uriOrder=="asc"?
+        a.timestamp-b.timestamp:
+        b.timestamp-a.timestamp;
+    });
+    order = uriOrder;
+  }
+  return order=="asc"?cacheData.concat(uriData):uriData.concat(cacheData);
+}
+
+function finalize(cachename,data,itemCBs,next){
+  try{
+    localStorage.setItem( cachename,JSON.stringify(data) );
+  }catch(e){
+    return; //some browsers don't have local storage
+  }
+  async.eachSeries(data, function(item,next){
+    itemCBs.ready(item, next);
+  },next);;
 }

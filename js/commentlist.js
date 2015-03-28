@@ -3,6 +3,9 @@ var commentHandler;
 
 jQuery(function($){
   if(!num) return;
+  var Template = require("template");
+  var cacheOrUriIterator = require("cache-or-load");
+
   commentHandler = new Template(
     "script.template.comments",
     "div.container.comments"

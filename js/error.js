@@ -1,5 +1,6 @@
 var errorHandler;
 jQuery(function($){
+  var Template = require("template");
   errorHandler = new Template(
     "script.template.error",
     "div.container.error",
@@ -7,7 +8,13 @@ jQuery(function($){
   );
   var oldwinerr = window.onerror;
   window.onerror = function ( message, filename, lineno, colno, error ){
-    if ( error !== undefined && error.hasOwnProperty( "name" ) && error.name == "Magic"){
+    console.log(arguments);
+    if(!error){
+      errorHandler.add({
+        name:"Uncaught Error: "+message,
+        message: filename+": "+lineno+", "+colno
+      });
+    }else if ( error !== undefined && error.hasOwnProperty( "name" ) && error.name == "Magic"){
       errorHandler.add({
         name:"Uncaught Error: "+error.name,
         message: message+"<pre>"+error.stack+"</pre>"
@@ -19,7 +26,7 @@ jQuery(function($){
   };
 });
 
-function addError(error){
+window.addError = function(error){
   if(error.status){
     errorHandler.add({name:"Ajax: "+error.status, message:error.responseText});
   }else{
@@ -27,22 +34,21 @@ function addError(error){
   }
 }
 
-function add403(){
+window.add403 = function(){
   var topush = {
     class:"four-zero-three",
     name:"You've hit max data"
   };
   if(user.isLoggedIn){
-    topush.message = "Apparently, people have been using our app too much..."+
-    "<button onclick='user.login()'>Log in</button>";
+    topush.message = "Apparently, people have been using our app too much...";
   }else{
-    topush.message = "If you'd like to continue, please "+
-    "<button onclick='user.login()'>Log in</button>";
+    topush.message = "If you'd like to continue, please ";
   }
+  topush.message += "<button class=\"btn btn-primary\" onclick='user.login()'>Log in</button>";
   errorHandler.add(topush);
 }
 
-function add404(){
+window.add404 = function(){
   errorHandler.add({
     name: "Your in the wrong place my friend.",
     message: "<a href='/'>Heres a hand, we'll get you back on the right track</a>"

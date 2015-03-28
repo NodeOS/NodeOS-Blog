@@ -4,7 +4,6 @@ var path = require("path");
 var async = require("async");
 var browserify = require("browserify");
 var ejs = require('ejs');
-var UglifyJS = require("uglify-js");
 
 
 var ob = module.exports = {};
@@ -59,59 +58,52 @@ ob.compileHTML = function compileHTML(inputdir, templatepath, outputdir, next)
 
 ob.compileJS = function compileJS(inputrequire, outputdir,next)
 {
-  var b = browserify();
-  var l = inputrequire.length;
-
-  while(l--)
-  {
-    var item = inputrequire[l];
-
-    if(typeof item === "string")
+ var createBundle = function(inputrequire)
+ {
+    var b =   browserify();
+    var l = inputrequire.length;
+    inputrequire = inputrequire.map(function(item)
     {
-      b.require(item);
-      continue;
-    }
-
-    if(!item.path)
-      return next("when specifying something to require, "+
-        "\n\t you must provide a valid string or"+
-        "\n\t you must provide an object with {path:\"valid path or name\"}");
-
-    b.require(item.path, item.options);
-    inputrequire[l] = item.path;
-  }
-
-  b.bundle(function(e,buff)
-  {
-    if(e) return next(e);
-
-    async.parallel(
-    [
-      function(next)
+      if(typeof item === "string")
       {
-        fs.writeFile(outputdir+"/api.js", buff,
-        function(e)
-        {
-          if(e) return next(e);
-          next(void(0), {input:inputrequire,output:outputdir+"/api.js"});
-        });
-      },
-      function(next)
-      {
-        var min = UglifyJS.parse(buff.toString("utf-8"));
-
-        min.figure_out_scope();
-        fs.writeFile(outputdir+"/api.min.js", min.print_to_string(),
-        function(e)
-        {
-          if(e) return next(e);
-
-          next(void(0), {input:inputrequire,output:outputdir+"/api.min.js"});
-        });
+        b.add(path.normalize(item));
+        return item;
       }
-    ],
-    next);
-  });
+      if(!item.path)
+      {
+        throw new Error(
+          "when specifying something to require, "+
+          "\n\t you must provide a valid string or"+
+          "\n\t you must provide an object with {path:\"valid path or name\"}"
+        );
+      }
+      b.require(path.normalize(item.path), item.options);
+      return item.path;
+    });
+    return b;
+  };
+  async.parallel(
+  [
+    function(next)
+    {
+      createBundle(inputrequire).bundle()
+      .pipe(fs.createWriteStream(outputdir+"/api.js"))
+      .on("end",function(){
+        next(void(0), {input:inputrequire,output:outputdir+"/api.js"});
+      }).on("error",next)
+    },
+    function(next)
+    {
+      createBundle(inputrequire).transform({global: true}, 'uglifyify')
+      .bundle()
+      .pipe(fs.createWriteStream(outputdir+"/api.min.js"))
+      .on("end",function()
+      {
+        next(void(0), {input:inputrequire,output:outputdir+"/api.min.js"});
+      }).on("error",next);
+    }
+  ],
+  next);
 };
 
 ob.compileAll = function compileAll(inputs, templatepath, outputdir, next)
@@ -121,7 +113,7 @@ ob.compileAll = function compileAll(inputs, templatepath, outputdir, next)
   async.parallel(
   [
     ob.compileHTML.bind(void(0),inputs.dir, templatepath, outputdir),
-    ob.compileJS.bind(void(0),inputs.require, outputdir)
+    ob.compileJS.bind(void(0),inputs.add, outputdir)
   ],
   function(e,results)
   {
@@ -143,19 +135,13 @@ if(!module.parent)
 {
   var inputs =
   {
-    require:
+    add:
     [
-      "auth-provider",
-      {
-        path: __dirname+"/node_modules/highlight.js/lib/index.js",
-        options:
-        {
-          expose: "highlight"
-        }
-      },
-      "querystring",
-      "async",
-//    "markdown"
+      {path:__dirname+"/js/template.js", options:{expose:"template"}},
+      {path:__dirname+"/js/cacheOrLoad.js", options:{expose:"cache-or-load"}},
+      __dirname+"/js/utility.js",
+      __dirname+"/js/error.js",
+      __dirname+"/js/user.js"
     ],
     dir: __dirname+"/input"
   };

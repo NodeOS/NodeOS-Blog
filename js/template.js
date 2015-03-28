@@ -30,3 +30,5 @@ Template.prototype.remove = function(e){
   }
   art.remove();
 };
+
+module.exports = Template;

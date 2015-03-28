@@ -17,6 +17,10 @@ var singleHandler;
 
 jQuery(function($){
   if(!num) return;
+  var Template = require("template");
+  var cacheOrUriIterator = require("cache-or-load");
+
+
   singleHandler = new Template(
     "script.template.blogsingle",
     "div.container.blogsingle"
