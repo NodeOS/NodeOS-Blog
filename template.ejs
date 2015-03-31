@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="http://node-os.com/css/default.css"/>
 
     <script type="application/javascript" src="http://cloud.github.com/downloads/wycats/handlebars.js/handlebars-1.0.0.beta.6.js"></script>
-    <script type="text/javascript" src="api.min.js"></script>
     <style>
       .more {display:none}
       #articles img{max-width:100%}
@@ -61,7 +60,7 @@
             <footer>
               Don't worry, it probably was not your fault... probably...<br/>
               Even if it was,
-              <a target="_blank" href="https://github.com/formula1/NodeOS-Blog/issues">just submit an issue :)</a>
+              <a target="_blank" href="https://github.com/NodeOS/GitBlog/issues">just submit an issue :)</a>
             </footer>
           </div>
         </article>
@@ -72,7 +71,7 @@
         <div>
           <p>
             If you login: We store your access token we retrieve from github on your computer as a cookie.
-            <a href="https://github.com/formula1/AuthProvider/blob/master/index.js#L87">See the Code</a>
+            <a class="btn btn-primary" href="https://github.com/formula1/AuthProvider/blob/master/index.js#L87">See the Code</a>
           </p>
           <p class="more">
             This is done so that we can access the github api in a verified manner.<br/>
@@ -81,7 +80,7 @@
           </p>
           <p>
             By Using the Blog: We store data we get from github on your available local storage.
-            <a href="https://github.com/formula1/NodeOS-Blog/blob/master/html/footerjs/cacheOrLoad.js#L38">See the Code</a>
+            <a class="btn btn-primary" href="https://github.com/NodeOS/GitBlog/blob/master/js/cacheOrLoad.js">See the Code</a>
           </p>
           <p class="more" >
             This is done so that you may avoid as many calls to github as possible.<br/>
@@ -144,13 +143,7 @@
 
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-
-    <!-- START: BIND DATA TO VIEW -->
-    <script type="text/javascript" src="js/cacheOrLoad.js"></script>
-    <script type="text/javascript" src="js/template.js"></script>
-    <script type="text/javascript" src="js/utility.js"></script>
-    <script type="text/javascript" src="js/error.js"></script>
-    <script type="text/javascript" src="js/user.js"></script>
+    <script type="text/javascript" src="api.js"></script>
 
     <script type="text/javascript">
       <%-cur_page.foot%>

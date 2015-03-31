@@ -2,6 +2,8 @@
 var listHandler;
 
 jQuery(function($){
+  var Template = require("template");
+  var cacheOrUriIterator = require("cache-or-load");
   listHandler = new Template(
     "script.template.bloglist",
     "div.container.bloglist"
