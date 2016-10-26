@@ -18,12 +18,12 @@
   },
   "homepage": "https://github.com/formula1/NodeOS-Blog",
   "dependencies": {
-    "async": "^0.9.0",
+    "async": "^2.1.2",
     "auth-provider": "^0.6.2",
-    "browserify": "^8.1.3",
+    "browserify": "^13.1.1",
     "ejs": "^2.2.4",
     "hellojs": "^1.4.3",
-    "highlight.js": "^8.4.0",
+    "highlight.js": "^9.7.0",
     "markdown": "^0.5.0",
     "uglifyify": "^3.0.1"
   }
