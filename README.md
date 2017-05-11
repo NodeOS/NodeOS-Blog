@@ -1,4 +1,6 @@
 # GitBlog
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/NodeOS/GitBlog.svg)](https://greenkeeper.io/)
 Blog engine using [GitHub](https://github.com/) issues as backend
 
 [GitHub Pages](https://pages.github.com/) is a web hosting tool that allow to easily edit your webpages using [Jekyll](http://jekyllrb.com/), and that can be used to host your own blog. Problem is that it only allow to use static content, so you need to use external services as [Disquss](https://disqus.com/) to manage your blog comments.
