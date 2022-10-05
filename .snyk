@@ -1,0 +1,10 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.0
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  'npm:uglify-js:20151024':
+    - browserify > umd > ruglify > uglify-js:
+        patched: '2022-10-05T22:09:02.730Z'
+    - browserify > browser-pack > umd > ruglify > uglify-js:
+        patched: '2022-10-05T22:09:02.730Z'
